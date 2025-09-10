@@ -18,8 +18,6 @@ class _SplashBodyState extends State<SplashBody>
   late final AnimationController _animationController;
   late final Animation<double> fadeAnimation;
 
-  late final Animation<double> rotateAnimation;
-
   @override
   void initState() {
     super.initState();
