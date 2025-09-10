@@ -29,7 +29,7 @@ class AppColors {
   static const AppColors dark = AppColors(
     background: Color(0xFF121212),
     surface: Color(0xFF1E1E1E),
-    primary: Color(0xFF26A69A),
+    primary: Color(0xFF4B91E2),
     onPrimary: Colors.white,
     text: Colors.white,
     secondaryText: Color(0xFFB0B0B0),
@@ -47,7 +47,7 @@ class AppColors {
   static const AppColors light = AppColors(
     background: Colors.white,
     surface: Color(0xFFF5F5F5),
-    primary: Color(0xFF26A69A),
+    primary: Color(0xFF4B91E2),
     onPrimary: Colors.white,
     text: Colors.black,
     secondaryText: Color(0xFF666666),

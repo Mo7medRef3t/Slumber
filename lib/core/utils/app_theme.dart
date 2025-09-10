@@ -62,8 +62,8 @@ class AppTheme {
       // 🔘 Buttons (Elevated + Outlined + Text)
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: colors.background,
-          foregroundColor: colors.text,
+          backgroundColor: colors.primary,
+          foregroundColor: colors.onPrimary,
           textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
@@ -94,7 +94,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
-        hintStyle: TextStyle(color: colors.secondaryText),
+        hintStyle: TextStyle(color: colors.secondaryText,fontSize: 14),
         labelStyle: TextStyle(color: colors.secondaryText),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

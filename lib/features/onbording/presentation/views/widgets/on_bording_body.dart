@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:slumber/core/utils/app_colors.dart';
+import 'package:slumber/core/utils/app_router.dart';
 
 class OnBordingBody extends StatefulWidget {
   const OnBordingBody({super.key});
@@ -38,9 +39,7 @@ class _OnBordingBodyState extends State<OnBordingBody> {
         curve: Curves.easeInOut,
       );
     } else {
-      /// بعد آخر صفحة → الانتقال مثلا للـ Login/SignUp
-      GoRouter.of(context).pushReplacement('/auth');
-      /// 👆 غيّر '/auth' بالـ route المناسب عندك
+      GoRouter.of(context).pushReplacement(AppRouter.kSignIn);
     }
   }
 
@@ -136,6 +135,12 @@ class _OnBordingBodyState extends State<OnBordingBody> {
               ElevatedButton(
                 onPressed: _nextPage,
                 style: ElevatedButton.styleFrom(
+                  backgroundColor: brightness == Brightness.dark
+                      ? Colors.black
+                      : Colors.white,
+                  foregroundColor: brightness == Brightness.dark
+                      ? Colors.white
+                      : Colors.black,
                   padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.r),
