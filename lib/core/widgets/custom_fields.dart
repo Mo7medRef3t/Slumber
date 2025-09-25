@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/src/services/text_formatter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:slumber/core/utils/app_colors.dart';
 
@@ -12,7 +13,7 @@ class CustomTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final FormFieldValidator<String>? validator;
   final ValueSetter<String>? onSaved;
-
+  final List<TextInputFormatter>? inputFormatters;
   const CustomTextField({
     super.key,
     required this.label,
@@ -24,6 +25,7 @@ class CustomTextField extends StatefulWidget {
     this.validator,
     this.onSaved,
     this.enabled,
+    this.inputFormatters,
   });
 
   @override
@@ -62,6 +64,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           validator: widget.validator,
           enabled: widget.enabled ?? true,
           onChanged: widget.onChanged,
+          inputFormatters: widget.inputFormatters,
           decoration: InputDecoration(
             hintText: widget.hint,
             suffixIcon:
