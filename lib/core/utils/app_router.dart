@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:slumber/features/Home/presentation/views/widgets/sleep_tracking_view.dart';
 import 'package:slumber/features/auth/presentation/views/sign_in_view.dart';
 import 'package:slumber/features/auth/presentation/views/sign_up_view.dart';
 import 'package:slumber/features/onbording/presentation/views/on_bording_view.dart';
 import 'package:slumber/features/splash/presentation/views/splash_view.dart';
+import 'package:slumber/screens.dart';
 
 abstract class AppRouter {
   static const kOnBordingView = '/onBordingView';
   static const kSignUp = '/signup';
   static const kSignIn = '/signin';
+  static const kScreens = '/screens';
+static const kSleepTrackingView = "/sleepTracking";
+
 
   static final router = GoRouter(
     routes: [
@@ -31,6 +36,8 @@ abstract class AppRouter {
       ),
       GoRoute(path: kSignUp, builder: (context, state) => const SignUpView()),
       GoRoute(path: kSignIn, builder: (context, state) => const SignInView()),
+      GoRoute(path: kScreens, builder: (context, state) => const Screens()),
+      GoRoute(path: kSleepTrackingView, builder: (context, state) => const SleepTrackingView()),
     ],
   );
 }

@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -41,7 +43,7 @@ class _SignInBodyState extends State<SignInBody> {
       final user = await _authService.signIn(email, password);
       if (user != null) {
         _showSnack("✅ Welcome back!", color: Colors.green);
-        context.go('/home'); // بعد تسجيل الدخول يروح للهوم
+        context.go(AppRouter.kScreens);
       }
     } catch (e) {
       _showSnack(e.toString());
@@ -56,7 +58,7 @@ class _SignInBodyState extends State<SignInBody> {
       final user = await _authService.signInWithGoogle();
       if (user != null) {
         _showSnack("✅ Signed in with Google", color: Colors.green);
-        context.go('/home');
+        context.go(AppRouter.kScreens);
       }
     } catch (e) {
       _showSnack("Google Sign-In Failed: $e");

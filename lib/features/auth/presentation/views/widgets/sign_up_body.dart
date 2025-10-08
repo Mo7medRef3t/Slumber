@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -69,7 +71,7 @@ class _SignUpBodyState extends State<SignUpBody> {
       final user = await _authService.signUp(email, password, name, age: age);
       if (user != null) {
         _showSnack("✅ Account created successfully!", color: Colors.green);
-        context.go('/home');
+        context.go(AppRouter.kScreens);
       }
     } catch (e) {
       _showSnack(e.toString());
@@ -87,7 +89,7 @@ class _SignUpBodyState extends State<SignUpBody> {
           "✅ Signed up with Google successfully!",
           color: Colors.green,
         );
-        context.go('/home');
+        context.go(AppRouter.kScreens);
       }
     } catch (e) {
       _showSnack("Google Sign-In Failed: $e");
