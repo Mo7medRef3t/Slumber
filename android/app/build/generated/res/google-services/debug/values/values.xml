@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="default_web_client_id" translatable="false">72419158941-j28tb4rg6udanufik6493g7ivo3a85cb.apps.googleusercontent.com</string>
+    <string name="gcm_defaultSenderId" translatable="false">72419158941</string>
+    <string name="google_api_key" translatable="false">AIzaSyB8SyWFW5IVY0H3f80l5RsZt9S6A8qISvg</string>
+    <string name="google_app_id" translatable="false">1:72419158941:android:d886b9091f44152980dd74</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyB8SyWFW5IVY0H3f80l5RsZt9S6A8qISvg</string>
+    <string name="google_storage_bucket" translatable="false">slumber-ee7ce.firebasestorage.app</string>
+    <string name="project_id" translatable="false">slumber-ee7ce</string>
+</resources>

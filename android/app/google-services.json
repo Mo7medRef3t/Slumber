@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "72419158941-jj46o53cj3k9rmshh2brb0pcb627o0hd.apps.googleusercontent.com",
+          "client_id": "72419158941-qe384bdf2en4j122bg4vrimvh0q3ji2i.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.slumber",
-            "certificate_hash": "f931cf33b6e6f8c7159ae769a4aebb9cfcf5a11e"
+            "certificate_hash": "05b68db71bd8d5128f1499bc21a8ebde0ea0880c"
           }
         },
         {

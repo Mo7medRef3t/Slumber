@@ -23,9 +23,19 @@ class FirestoreService {
 
   /// استرجاع sleep history
   Stream<List<Map<String, dynamic>>> getSleepHistory() {
-    return _db.collection("users").doc(uid).collection("sleepHistory")
-      .orderBy("startTime", descending: true)
-      .snapshots()
-      .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+    return _db
+        .collection("users")
+        .doc(uid)
+        .collection("sleepHistory")
+        .orderBy("startTime", descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+  }
+
+  Future<SlumberUser?> getCurrentUser() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final doc = await _db.collection("users").doc(uid).get();
+    if (!doc.exists) return null;
+    return SlumberUser.fromMap(doc.data()!);
   }
 }

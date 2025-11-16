@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:slumber/core/utils/app_colors.dart';
-import 'package:slumber/features/Home/presentation/views/dashboard_view.dart';
+import 'package:slumber/features/home/presentation/views/dashboard_view.dart';
 import 'package:slumber/features/achievements_view.dart';
-import 'package:slumber/features/profile_view.dart';
+import 'package:slumber/features/profile/presentation/views/profile_view.dart';
 import 'package:slumber/features/sleep_history_view.dart';
 
 class Screens extends StatefulWidget {
