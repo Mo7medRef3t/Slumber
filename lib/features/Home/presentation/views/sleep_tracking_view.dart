@@ -2,8 +2,11 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:slumber/core/firestore_service.dart';
+import 'package:slumber/features/sleep/cubit/sleep_cubit.dart';
+import 'package:slumber/features/sleep/models/sleep_record.dart';
 
 class SleepTrackingView extends StatefulWidget {
   const SleepTrackingView({super.key});
@@ -14,47 +17,60 @@ class SleepTrackingView extends StatefulWidget {
 
 class _SleepTrackingViewState extends State<SleepTrackingView> {
   final _firestoreService = FirestoreService();
-  Stopwatch stopwatch = Stopwatch();
-  Timer? timer;
-  String elapsedTime = "00:00:00";
+
+  final Stopwatch _stopwatch = Stopwatch();
+  Timer? _timer;
+  String _elapsedTime = "00:00:00";
 
   @override
   void dispose() {
-    timer?.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 
   void _start() {
-    stopwatch.start();
-    timer = Timer.periodic(const Duration(seconds: 1), (t) {
+    _stopwatch.start();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final d = _stopwatch.elapsed;
       setState(() {
-        final d = stopwatch.elapsed;
-        elapsedTime =
-            "${d.inHours.toString().padLeft(2, '0')}:${(d.inMinutes % 60).toString().padLeft(2, '0')}:${(d.inSeconds % 60).toString().padLeft(2, '0')}";
+        _elapsedTime =
+            "${d.inHours.toString().padLeft(2, '0')}:"
+            "${(d.inMinutes % 60).toString().padLeft(2, '0')}:"
+            "${(d.inSeconds % 60).toString().padLeft(2, '0')}";
       });
     });
   }
 
-  void _stop() async {
-    timer?.cancel();
-    stopwatch.stop();
+  Future<void> _stop() async {
+    _timer?.cancel();
+    _stopwatch.stop();
 
     final end = DateTime.now();
-    final start = end.subtract(stopwatch.elapsed);
+    final start = end.subtract(_stopwatch.elapsed);
 
+    // ✅ Save to Firestore
     await _firestoreService.addSleepRecord(start, end);
+
+    // ✅ Update SleepCubit immediately
+    final record = SleepRecord(
+      startTime: start,
+      endTime: end,
+      durationMinutes: end.difference(start).inMinutes,
+    );
+
+    context.read<SleepCubit>().addRecord(record);
 
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text("✅ Sleep session saved!")));
 
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) Navigator.pop(context);
-    });
+    if (mounted) {
+      Navigator.pop(context);
+    }
 
     setState(() {
-      elapsedTime = "00:00:00";
-      stopwatch.reset();
+      _elapsedTime = "00:00:00";
+      _stopwatch.reset();
     });
   }
 
@@ -71,8 +87,8 @@ class _SleepTrackingViewState extends State<SleepTrackingView> {
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: Text(
-                elapsedTime,
-                key: ValueKey(elapsedTime),
+                _elapsedTime,
+                key: ValueKey(_elapsedTime),
                 style: TextStyle(
                   fontSize: 50.sp,
                   fontWeight: FontWeight.bold,
@@ -82,17 +98,17 @@ class _SleepTrackingViewState extends State<SleepTrackingView> {
             ),
             SizedBox(height: 40.h),
             ElevatedButton(
-              onPressed: stopwatch.isRunning ? _stop : _start,
+              onPressed: _stopwatch.isRunning ? _stop : _start,
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    stopwatch.isRunning ? Colors.redAccent : colors.primary,
+                    _stopwatch.isRunning ? Colors.redAccent : colors.primary,
                 minimumSize: Size(220.w, 60.h),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
               child: Text(
-                stopwatch.isRunning ? "End Sleep" : "Start Sleep",
+                _stopwatch.isRunning ? "End Sleep" : "Start Sleep",
                 style: const TextStyle(color: Colors.white, fontSize: 18),
               ),
             ),

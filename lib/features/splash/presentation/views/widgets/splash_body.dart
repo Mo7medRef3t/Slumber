@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -22,7 +23,7 @@ class _SplashBodyState extends State<SplashBody>
   void initState() {
     super.initState();
     _initAnimations();
-    _goNextPage();
+    _decideNext();
   }
 
   void _initAnimations() {
@@ -35,7 +36,6 @@ class _SplashBodyState extends State<SplashBody>
       begin: 0.2,
       end: 1,
     ).animate(_animationController);
-
   }
 
   @override
@@ -56,7 +56,11 @@ class _SplashBodyState extends State<SplashBody>
       children: [
         FadeTransition(
           opacity: fadeAnimation,
-          child: Image.asset(AssetsData.logo, height: 112.h,fit: BoxFit.contain,),
+          child: Image.asset(
+            AssetsData.logo,
+            height: 112.h,
+            fit: BoxFit.contain,
+          ),
         ),
         Text(
           'Slumber',
@@ -80,9 +84,17 @@ class _SplashBodyState extends State<SplashBody>
     );
   }
 
-  void _goNextPage() {
+  void _decideNext() {
     Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
+      if (!mounted) return;
+
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user != null) {
+        // ✅ User Logged In → Home
+        GoRouter.of(context).pushReplacement(AppRouter.kScreens);
+      } else {
+        // ✅ No User → Onboarding
         GoRouter.of(context).pushReplacement(AppRouter.kOnBordingView);
       }
     });

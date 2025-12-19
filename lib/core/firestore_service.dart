@@ -4,7 +4,7 @@ import 'package:slumber/features/auth/data/models/slumber_user.dart';
 
 class FirestoreService {
   final _db = FirebaseFirestore.instance;
-  final uid = FirebaseAuth.instance.currentUser!.uid;
+  String get uid => FirebaseAuth.instance.currentUser!.uid;
 
   /// تحديث بيانات اليوزر
   Future<void> updateUserProfile(SlumberUser user) async {

@@ -45,11 +45,11 @@ abstract class AppRouter {
         builder: (context, state) => const SleepTrackingView(),
       ),
       GoRoute(
-        path:kEditProfileView,
+        path: kEditProfileView,
         builder: (context, state) => const EditProfileView(),
       ),
       GoRoute(
-        path:kSettingsView,
+        path: kSettingsView,
         builder: (context, state) => const SettingsView(),
       ),
     ],

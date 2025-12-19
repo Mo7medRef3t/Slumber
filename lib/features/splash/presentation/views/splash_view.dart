@@ -7,9 +7,10 @@ class SplashView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final colors =
-        theme.brightness == Brightness.dark ? AppColors.dark : AppColors.light;
+        Theme.of(context).brightness == Brightness.dark
+            ? AppColors.dark
+            : AppColors.light;
 
     return Scaffold(
       body: Container(

@@ -2,7 +2,9 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:slumber/core/user/cubit/user_cubit.dart';
 import 'package:slumber/core/utils/app_theme.dart';
 import 'package:slumber/core/firestore_service.dart';
 import 'package:slumber/features/auth/data/models/slumber_user.dart';
@@ -38,7 +40,8 @@ class _EditProfileViewState extends State<EditProfileView> {
   Future<void> _loadUserData() async {
     try {
       final uid = FirebaseAuth.instance.currentUser!.uid;
-      final snapshot = await FirebaseFirestore.instance.collection("users").doc(uid).get();
+      final snapshot =
+          await FirebaseFirestore.instance.collection("users").doc(uid).get();
       if (snapshot.exists) {
         setState(() {
           userData = snapshot.data();
@@ -48,9 +51,9 @@ class _EditProfileViewState extends State<EditProfileView> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load data: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed to load data: $e")));
     }
   }
 
@@ -70,18 +73,18 @@ class _EditProfileViewState extends State<EditProfileView> {
       );
 
       await _firestoreService.updateUserProfile(updatedUser);
-
+      context.read<UserCubit>().updateUser(updatedUser);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("✅ Profile updated successfully")),
       );
-
       // back to profile page
       if (mounted) {
         context.pop(true); // من GoRouter
       }
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Failed to save: $e")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed to save: $e")));
     } finally {
       setState(() => _loading = false);
     }
@@ -98,94 +101,108 @@ class _EditProfileViewState extends State<EditProfileView> {
         centerTitle: true,
         elevation: 0,
       ),
-      body: userData == null
-          ? const Center(child: CircularProgressIndicator.adaptive())
-          : Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(20.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Name
-                    _buildField(
-                      label: "Full Name",
-                      controller: _nameController,
-                      keyboardType: TextInputType.text,
-                      validator: (v) =>
-                          v == null || v.trim().isEmpty ? "Enter your name" : null,
-                    ),
+      body:
+          userData == null
+              ? const Center(child: CircularProgressIndicator.adaptive())
+              : Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(20.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Name
+                      _buildField(
+                        label: "Full Name",
+                        controller: _nameController,
+                        keyboardType: TextInputType.text,
+                        validator:
+                            (v) =>
+                                v == null || v.trim().isEmpty
+                                    ? "Enter your name"
+                                    : null,
+                      ),
 
-                    SizedBox(height: 20.h),
+                      SizedBox(height: 20.h),
 
-                    // Age
-                    _buildField(
-                      label: "Age",
-                      controller: _ageController,
-                      keyboardType: TextInputType.number,
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return "Enter your age";
-                        final age = int.tryParse(v);
-                        if (age == null || age <= 0) return "Invalid age";
-                        return null;
-                      },
-                    ),
+                      // Age
+                      _buildField(
+                        label: "Age",
+                        controller: _ageController,
+                        keyboardType: TextInputType.number,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) {
+                            return "Enter your age";
+                          }
+                          final age = int.tryParse(v);
+                          if (age == null || age <= 0) return "Invalid age";
+                          return null;
+                        },
+                      ),
 
-                    SizedBox(height: 20.h),
+                      SizedBox(height: 20.h),
 
-                    // Sleep Goal
-                    _buildField(
-                      label: "Sleep Goal (hours)",
-                      controller: _goalController,
-                      keyboardType: TextInputType.number,
-                      validator: (v) {
-                        if (v == null || v.isEmpty) return "Enter goal hours";
-                        final g = int.tryParse(v);
-                        if (g == null || g <= 0) return "Invalid goal hours";
-                        return null;
-                      },
-                    ),
+                      // Sleep Goal
+                      _buildField(
+                        label: "Sleep Goal (hours)",
+                        controller: _goalController,
+                        keyboardType: TextInputType.number,
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return "Enter goal hours";
+                          final g = int.tryParse(v);
+                          if (g == null || g <= 0) return "Invalid goal hours";
+                          return null;
+                        },
+                      ),
 
-                    SizedBox(height: 40.h),
+                      SizedBox(height: 40.h),
 
-                    // Save Changes button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _loading ? null : _saveChanges,
-                        icon: const Icon(Icons.save_outlined),
-                        label: _loading
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text("Save Changes"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: scheme.primary,
-                          foregroundColor: scheme.onPrimary,
-                          padding: EdgeInsets.symmetric(vertical: 14.h),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                      // Save Changes button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _loading ? null : _saveChanges,
+                          icon: const Icon(Icons.save_outlined),
+                          label:
+                              _loading
+                                  ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                  : const Text("Save Changes"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: scheme.primary,
+                            foregroundColor: scheme.onPrimary,
+                            padding: EdgeInsets.symmetric(vertical: 14.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
 
-                    SizedBox(height: 20.h),
+                      SizedBox(height: 20.h),
 
-                    // Cancel / Back button
-                    OutlinedButton.icon(
-                      onPressed: () => context.pop(),
-                      icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-                      label: const Text("Cancel"),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: scheme.primary, width: 1.5),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 20.w),
-                        foregroundColor: scheme.primary,
+                      // Cancel / Back button
+                      OutlinedButton.icon(
+                        onPressed: () => context.pop(),
+                        icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+                        label: const Text("Cancel"),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: scheme.primary, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            vertical: 14.h,
+                            horizontal: 20.w,
+                          ),
+                          foregroundColor: scheme.primary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
     );
   }
 
@@ -202,9 +219,10 @@ class _EditProfileViewState extends State<EditProfileView> {
         Text(
           label,
           style: TextStyle(
-              color: extra.secondaryText,
-              fontWeight: FontWeight.w600,
-              fontSize: 15.sp),
+            color: extra.secondaryText,
+            fontWeight: FontWeight.w600,
+            fontSize: 15.sp,
+          ),
         ),
         SizedBox(height: 8.h),
         TextFormField(

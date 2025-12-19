@@ -1,55 +1,33 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import 'package:slumber/features/home/presentation/views/widgets/empty_state_box.dart';
+import 'package:slumber/features/sleep/cubit/sleep_cubit.dart';
+import 'package:slumber/features/sleep/cubit/sleep_state.dart';
+import 'empty_state_box.dart';
 
 class SleepTrendChart extends StatelessWidget {
   const SleepTrendChart({super.key});
-
-  Future<List<Map<String, dynamic>>> _getLast7DaysSleep() async {
-    final db = FirebaseFirestore.instance;
-    final snapshot =
-        await db
-            .collection("users")
-            .doc(FirebaseAuth.instance.currentUser!.uid)
-            .collection("sleepHistory")
-            .orderBy("startTime", descending: true)
-            .limit(7)
-            .get();
-
-    final data = <Map<String, dynamic>>[];
-    for (var doc in snapshot.docs.reversed) {
-      final d = doc.data();
-      final start = DateTime.parse(d["startTime"]);
-      double hours = (d["duration"] as int) / 60.0;
-      data.add({"day": DateFormat("E").format(start), "hours": hours});
-    }
-    return data;
-  }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _getLast7DaysSleep(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator.adaptive());
-        }
-        final data = snapshot.data!;
-        if (data.isEmpty) {
+    return BlocBuilder<SleepCubit, SleepState>(
+      builder: (context, state) {
+        if (state is! SleepLoaded || state.history.isEmpty) {
           return const EmptyStateBox(message: "No sleep data yet.");
         }
+
+        final data = state.history.take(7).toList().reversed.toList();
+
         final spots =
             data
                 .asMap()
                 .entries
                 .map(
-                  (e) => FlSpot(e.key.toDouble(), e.value["hours"] as double),
+                  (e) => FlSpot(e.key.toDouble(), e.value.durationMinutes / 60),
                 )
                 .toList();
 
@@ -72,17 +50,16 @@ class SleepTrendChart extends StatelessWidget {
                   height: 180.h,
                   child: LineChart(
                     LineChartData(
-                      gridData: FlGridData(show: true),
                       borderData: FlBorderData(show: false),
                       titlesData: FlTitlesData(
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
-                            getTitlesWidget: (value, _) {
-                              final index = value.toInt();
-                              if (index >= data.length) return const SizedBox();
+                            getTitlesWidget: (v, _) {
+                              final i = v.toInt();
+                              if (i >= data.length) return const SizedBox();
                               return Text(
-                                data[index]["day"],
+                                DateFormat('E').format(data[i].startTime),
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: colors.secondary,
@@ -95,11 +72,7 @@ class SleepTrendChart extends StatelessWidget {
                           sideTitles: SideTitles(
                             showTitles: true,
                             reservedSize: 30,
-                            getTitlesWidget:
-                                (v, _) => Text(
-                                  "${v.toInt()}h",
-                                  style: TextStyle(fontSize: 11.sp),
-                                ),
+                            getTitlesWidget: (v, _) => Text("${v.toInt()}h"),
                           ),
                         ),
                       ),
@@ -109,7 +82,6 @@ class SleepTrendChart extends StatelessWidget {
                           isCurved: true,
                           color: colors.primary,
                           barWidth: 3,
-                          isStrokeCapRound: true,
                           dotData: FlDotData(show: true),
                           belowBarData: BarAreaData(
                             show: true,

@@ -7,15 +7,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:slumber/core/theme/theme_cubit.dart';
-import 'package:slumber/core/theme/theme_service.dart';
+
 
 import 'package:slumber/main.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget( SlumberApp(themeCubit: ThemeCubit(ThemeService()),));
+    await tester.pumpWidget( SlumberApp());
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);
