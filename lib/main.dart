@@ -6,6 +6,7 @@ import 'package:slumber/core/user/cubit/user_cubit.dart';
 import 'package:slumber/core/utils/app_router.dart';
 import 'package:slumber/core/utils/app_theme.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:slumber/features/achievements/cubit/achievements_cubit.dart';
 import 'package:slumber/features/auth/cubit/auth_cubit.dart';
 import 'package:slumber/features/sleep/cubit/sleep_cubit.dart';
 import 'package:slumber/firebase_options.dart';
@@ -30,6 +31,13 @@ void main() async {
         BlocProvider(create: (_) => UserCubit(FirestoreService())..loadUser()),
         BlocProvider(
           create: (_) => SleepCubit(FirestoreService())..startListening(),
+        ),
+        BlocProvider(
+          create:
+              (context) => AchievementsCubit(
+                sleepCubit: context.read<SleepCubit>(),
+                userCubit: context.read<UserCubit>(),
+              ),
         ),
       ],
       child: SlumberApp(),

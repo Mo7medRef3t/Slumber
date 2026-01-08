@@ -2,11 +2,8 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:slumber/core/firestore_service.dart';
-import 'package:slumber/features/sleep/cubit/sleep_cubit.dart';
-import 'package:slumber/features/sleep/models/sleep_record.dart';
 
 class SleepTrackingView extends StatefulWidget {
   const SleepTrackingView({super.key});
@@ -50,15 +47,6 @@ class _SleepTrackingViewState extends State<SleepTrackingView> {
 
     // ✅ Save to Firestore
     await _firestoreService.addSleepRecord(start, end);
-
-    // ✅ Update SleepCubit immediately
-    final record = SleepRecord(
-      startTime: start,
-      endTime: end,
-      durationMinutes: end.difference(start).inMinutes,
-    );
-
-    context.read<SleepCubit>().addRecord(record);
 
     ScaffoldMessenger.of(
       context,
