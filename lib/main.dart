@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:slumber/core/firestore_service.dart';
+import 'package:slumber/core/notifications/notification_service.dart';
 import 'package:slumber/core/user/cubit/user_cubit.dart';
 import 'package:slumber/core/utils/app_router.dart';
 import 'package:slumber/core/utils/app_theme.dart';
@@ -19,6 +20,8 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, // auto-generated
   );
+
+  await NotificationService().init();
   final themeService = ThemeService();
   final themeCubit = ThemeCubit(themeService);
   await themeCubit.loadTheme();

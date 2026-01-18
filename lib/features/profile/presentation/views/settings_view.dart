@@ -4,6 +4,7 @@ import 'package:slumber/features/profile/presentation/views/widgets/general_pref
 import 'package:slumber/features/profile/presentation/views/widgets/theme_mode_card.dart';
 import 'package:slumber/features/profile/presentation/views/widgets/delete_account_card.dart';
 import 'package:slumber/features/profile/presentation/views/widgets/about_app_card.dart';
+import 'package:slumber/core/notifications/notification_service.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
@@ -21,6 +22,12 @@ class SettingsView extends StatelessWidget {
           children: [
             const GeneralPreferencesCard(),
             SizedBox(height: 20.h),
+            ElevatedButton(
+              onPressed: () async {
+                await NotificationService().showInstantNotification();
+              },
+              child: Text("Test Notification Now"),
+            ),
             const ThemeModeCard(), // 🔄 Theme Switcher
             SizedBox(height: 20.h),
             const DeleteAccountCard(), // ❌ Account actions

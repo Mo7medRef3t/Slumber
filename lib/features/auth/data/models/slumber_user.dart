@@ -4,6 +4,7 @@ class SlumberUser {
   final String name;
   final int sleepGoalHours;
   final int age;
+  final String? bedtime;
 
   SlumberUser({
     required this.id,
@@ -11,6 +12,7 @@ class SlumberUser {
     required this.name,
     this.sleepGoalHours = 8,
     this.age = 0,
+    this.bedtime,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +22,7 @@ class SlumberUser {
       "name": name,
       "sleepGoalHours": sleepGoalHours,
       "age": age,
+      "bedtime": bedtime,
     };
   }
 
@@ -30,6 +33,7 @@ class SlumberUser {
       name: data["name"],
       sleepGoalHours: data["sleepGoalHours"] ?? 8,
       age: data["age"] ?? 0,
+      bedtime: data["bedtime"],
     );
   }
 }

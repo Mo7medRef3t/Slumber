@@ -7,7 +7,7 @@ import 'package:slumber/features/achievements/presentation/views/widgets/achieve
 import 'package:slumber/features/home/presentation/views/dashboard_view.dart';
 import 'package:slumber/features/achievements/presentation/views/achievements_view.dart';
 import 'package:slumber/features/profile/presentation/views/profile_view.dart';
-import 'package:slumber/features/sleep_history_view.dart';
+import 'package:slumber/features/sleep/presentation/views/insights_view.dart';
 
 class Screens extends StatefulWidget {
   const Screens({super.key});
@@ -21,7 +21,7 @@ class _ScreensState extends State<Screens> {
 
   final List<Widget> _pages = const [
     DashboardView(), // 🏠
-    SleepHistoryView(), // 📊
+    InsightsView(), // 📊
     AchievementsView(), // 🏆
     ProfileView(), // 👤
   ];
@@ -55,7 +55,7 @@ class _ScreensState extends State<Screens> {
             BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
             BottomNavigationBarItem(
               icon: Icon(Icons.bar_chart),
-              label: "History",
+              label: "Insights",
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.emoji_events),

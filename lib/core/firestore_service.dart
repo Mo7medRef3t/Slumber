@@ -21,20 +21,31 @@ class FirestoreService {
     });
   }
 
+  /// حذف sleep record
+  Future<void> deleteSleepRecord(String docId) async {
+    await _db
+        .collection("users")
+        .doc(uid)
+        .collection("sleepHistory")
+        .doc(docId)
+        .delete();
+  }
+
   /// استرجاع sleep history
-  Stream<List<Map<String, dynamic>>> getSleepHistory() {
+  Stream<QuerySnapshot<Map<String, dynamic>>> getSleepHistory() {
     return _db
         .collection("users")
         .doc(uid)
         .collection("sleepHistory")
         .orderBy("startTime", descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+        .snapshots();
+    // شيلنا الـ .map اللي كانت هنا، عشان عايزين الـ snapshot الخام
   }
 
   Future<SlumberUser?> getCurrentUser() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    final doc = await _db.collection("users").doc(uid).get();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+    final doc = await _db.collection("users").doc(user.uid).get();
     if (!doc.exists) return null;
     return SlumberUser.fromMap(doc.data()!);
   }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:slumber/core/firestore_service.dart';
 import '../models/sleep_record.dart';
@@ -10,7 +11,7 @@ class SleepCubit extends Cubit<SleepState> {
   SleepCubit(this.firestoreService) : super(SleepInitial());
 
   final List<SleepRecord> _history = [];
-  StreamSubscription<List<Map<String, dynamic>>>? _subscription;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _subscription;
 
   /// ✅ Start listening to Firestore stream
   void startListening() {
@@ -18,12 +19,14 @@ class SleepCubit extends Cubit<SleepState> {
 
     _subscription?.cancel();
     _subscription = firestoreService.getSleepHistory().listen(
-      (snapshots) {
+      (snapshot) {
         _history
           ..clear()
           ..addAll(
-            snapshots.map((e) => SleepRecord.fromMap(e)).toList()
-              ..sort((a, b) => b.startTime.compareTo(a.startTime)),
+            snapshot.docs.map((doc) {
+              // 🔥 هنا الحل: بنبعت الداتا والـ ID
+              return SleepRecord.fromMap(doc.data(), doc.id);
+            }).toList(),
           );
 
         emit(
@@ -39,6 +42,27 @@ class SleepCubit extends Cubit<SleepState> {
         emit(SleepError(e.toString()));
       },
     );
+  }
+
+  Future<void> deleteRecord(String recordId) async {
+    try {
+      // حذف من فايربيز
+      await firestoreService.deleteSleepRecord(recordId);
+
+      // تحديث القائمة محلياً فوراً عشان الـ UI يبقى سريع
+      _history.removeWhere((item) => item.id == recordId);
+
+      emit(
+        SleepLoaded(
+          history: List.unmodifiable(_history),
+          avgHours: _calculateAverage(),
+          bestSleep: _calculateBest(),
+          lastSleep: _history.isNotEmpty ? _history.first : null,
+        ),
+      );
+    } catch (e) {
+      emit(SleepError("Failed to delete: $e"));
+    }
   }
 
   /// ✅ Used when adding record locally (optimistic update)
@@ -59,6 +83,7 @@ class SleepCubit extends Cubit<SleepState> {
     if (_history.isEmpty) return 0;
 
     final last7 = _history.take(7).toList();
+    // ignore: avoid_types_as_parameter_names
     final total = last7.fold<int>(0, (sum, e) => sum + e.durationMinutes);
 
     return total / last7.length / 60.0;
