@@ -3,8 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// 🔥 Flag: هل التطبيق اتفتح من الـ Notification؟
-// static عشان نقدر نوصلها من أي مكان
+
 class NotificationFlags {
   static bool openedFromSleepNotification = false;
 }
@@ -198,25 +197,5 @@ class NotificationService {
 
   Future<void> cancelOngoingSleepNotification() async {
     await flutterLocalNotificationsPlugin.cancel(100);
-  }
-
-  // ===== Test =====
-  Future<void> showInstantNotification() async {
-    const NotificationDetails details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        'bedtime_alarm_channel',
-        'Bedtime Alarm',
-        importance: Importance.max,
-        priority: Priority.high,
-      ),
-      iOS: DarwinNotificationDetails(),
-    );
-
-    await flutterLocalNotificationsPlugin.show(
-      999,
-      'Test Notification 🔔',
-      'Notifications are working!',
-      details,
-    );
   }
 }

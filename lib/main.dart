@@ -2,24 +2,23 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:slumber/core/firestore_service.dart';
-import 'package:slumber/core/notifications/notification_service.dart';
 import 'package:slumber/core/user/cubit/user_cubit.dart';
 import 'package:slumber/core/utils/app_router.dart';
 import 'package:slumber/core/utils/app_theme.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:slumber/features/achievements/cubit/achievements_cubit.dart';
 import 'package:slumber/features/auth/cubit/auth_cubit.dart';
+import 'package:slumber/features/relax/cubit/sound_cubit.dart';
 import 'package:slumber/features/sleep/cubit/sleep_cubit.dart';
 import 'package:slumber/firebase_options.dart';
 import 'package:slumber/core/theme/theme_cubit.dart';
 import 'package:slumber/core/theme/theme_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:slumber/core/notifications/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform, // auto-generated
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await NotificationService().init();
   final themeService = ThemeService();
@@ -42,8 +41,9 @@ void main() async {
                 userCubit: context.read<UserCubit>(),
               ),
         ),
+        BlocProvider(create: (_) => SoundCubit()),
       ],
-      child: SlumberApp(),
+      child: const SlumberApp(),
     ),
   );
 }
@@ -65,7 +65,7 @@ class SlumberApp extends StatelessWidget {
               routerConfig: AppRouter.router,
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
-              themeMode: mode, // ← ديناميكي حسب Cubit
+              themeMode: mode,
             );
           },
         );

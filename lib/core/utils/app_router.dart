@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:slumber/features/home/presentation/views/sleep_tracking_view.dart';
+import 'package:slumber/features/sleep_tracking/presentation/views/sleep_tracking_view.dart';
 import 'package:slumber/features/auth/presentation/views/sign_in_view.dart';
 import 'package:slumber/features/auth/presentation/views/sign_up_view.dart';
 import 'package:slumber/features/onbording/presentation/views/on_bording_view.dart';

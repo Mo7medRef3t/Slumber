@@ -34,12 +34,10 @@ class _ActiveSessionBannerState extends State<ActiveSessionBanner>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    // 🔥 بدل ما نشيك مرة واحدة، نشيك كل ثانية
     _checkTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       _checkSession();
     });
 
-    // شيك أولي فوري
     _checkSession();
   }
 
@@ -69,7 +67,6 @@ class _ActiveSessionBannerState extends State<ActiveSessionBanner>
             "${seconds.toString().padLeft(2, '0')}";
       });
     } else {
-      // 🔥 لو مفيش جلسة، نخفي البانر فوراً
       if (_hasActiveSession) {
         setState(() {
           _hasActiveSession = false;
@@ -81,7 +78,6 @@ class _ActiveSessionBannerState extends State<ActiveSessionBanner>
 
   @override
   Widget build(BuildContext context) {
-    // 🔥 لو مفيش جلسة، مش بنعرض حاجة
     if (!_hasActiveSession) return const SizedBox.shrink();
 
     final colors = Theme.of(context).colorScheme;
