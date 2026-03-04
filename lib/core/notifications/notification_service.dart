@@ -1,6 +1,72 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+@pragma('vm:entry-point')
+Future<void> fireNotificationCallback() async {
+  final plugin = FlutterLocalNotificationsPlugin();
+
+  const AndroidInitializationSettings androidSettings =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const InitializationSettings initSettings = InitializationSettings(
+    android: androidSettings,
+  );
+
+  await plugin.initialize(initSettings);
+
+  final prefs = await SharedPreferences.getInstance();
+  final enabled = prefs.getBool('notifications_enabled') ?? false;
+
+  if (!enabled) return;
+
+  const NotificationDetails details = NotificationDetails(
+    android: AndroidNotificationDetails(
+      'bedtime_alarm_channel',
+      'Bedtime Alarm',
+      channelDescription: 'Fires even when app is killed',
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+    ),
+  );
+
+  await plugin.show(
+    1,
+    'Time to Sleep! 🌙',
+    "It's time to wind down and get some rest.",
+    details,
+  );
+
+  // إعادة الجدولة لبكرة
+  final hour = prefs.getInt('reminder_hour');
+  final minute = prefs.getInt('reminder_minute');
+
+  if (hour != null && minute != null) {
+    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    final nextAlarm = DateTime(
+      tomorrow.year,
+      tomorrow.month,
+      tomorrow.day,
+      hour,
+      minute,
+    );
+
+    await AndroidAlarmManager.oneShotAt(
+      nextAlarm,
+      1,
+      fireNotificationCallback,
+      exact: true,
+      wakeup: true,
+      rescheduleOnReboot: true,
+      allowWhileIdle: true,
+    );
+
+    debugPrint("🔔 Re-scheduled for tomorrow: $nextAlarm");
+  }
+}
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -10,47 +76,45 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  Timer? _dailyTimer;
-
   Future<void> init() async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
+    const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const DarwinInitializationSettings initializationSettingsDarwin =
+    const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
           requestSoundPermission: true,
           requestBadgePermission: true,
           requestAlertPermission: true,
         );
 
-    const InitializationSettings initializationSettings =
-        InitializationSettings(
-          android: initializationSettingsAndroid,
-          iOS: initializationSettingsDarwin,
-        );
+    const InitializationSettings initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
 
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(initSettings);
 
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >()
         ?.requestNotificationsPermission();
+
+    await AndroidAlarmManager.initialize();
+
+    debugPrint("✅ NotificationService + AlarmManager initialized");
   }
 
-  // 🔥 جدولة تنبيه باستخدام Timer (الحل البسيط والمضمون)
-  void scheduleDailyNotification({
+  Future<void> scheduleDailyNotification({
     required int id,
     required String title,
     required String body,
     required TimeOfDay time,
-  }) {
-    // إلغاء أي Timer قديم
-    _dailyTimer?.cancel();
+  }) async {
+    await AndroidAlarmManager.cancel(id);
 
-    // حساب الفرق بين الوقت الحالي والوقت المطلوب
     final now = DateTime.now();
-    var scheduledDateTime = DateTime(
+    var scheduledDate = DateTime(
       now.year,
       now.month,
       now.day,
@@ -58,50 +122,48 @@ class NotificationService {
       time.minute,
     );
 
-    // لو الوقت فات النهاردة، خليه بكرة
-    if (scheduledDateTime.isBefore(now)) {
-      scheduledDateTime = scheduledDateTime.add(const Duration(days: 1));
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
 
-    final difference = scheduledDateTime.difference(now);
+    await AndroidAlarmManager.oneShotAt(
+      scheduledDate,
+      id,
+      fireNotificationCallback,
+      exact: true,
+      wakeup: true,
+      rescheduleOnReboot: true,
+      allowWhileIdle: true,
+    );
 
-    debugPrint("🔔 Notification scheduled in: ${difference.inMinutes} minutes");
-    debugPrint("🔔 Will fire at: $scheduledDateTime");
-
-    // إنشاء Timer
-    _dailyTimer = Timer(difference, () async {
-      await _showNotification(id, title, body);
-
-      // إعادة الجدولة لليوم التالي
-      scheduleDailyNotification(id: id, title: title, body: body, time: time);
-    });
+    debugPrint("🔔 Alarm scheduled for: $scheduledDate");
+    debugPrint(
+      "🔔 Minutes remaining: ${scheduledDate.difference(now).inMinutes}",
+    );
   }
 
-  // عرض التنبيه
-  Future<void> _showNotification(int id, String title, String body) async {
+  Future<void> cancelNotification(int id) async {
+    await AndroidAlarmManager.cancel(id);
+    await flutterLocalNotificationsPlugin.cancel(id);
+    debugPrint("❌ Alarm $id cancelled");
+  }
+
+  Future<void> showInstantNotification() async {
     const NotificationDetails details = NotificationDetails(
       android: AndroidNotificationDetails(
-        'slumber_reminders',
-        'Sleep Reminders',
-        channelDescription: 'Reminds you to go to sleep',
+        'bedtime_alarm_channel',
+        'Bedtime Alarm',
         importance: Importance.max,
         priority: Priority.high,
-        playSound: true,
       ),
       iOS: DarwinNotificationDetails(),
     );
 
-    await flutterLocalNotificationsPlugin.show(id, title, body, details);
-  }
-
-  // إلغاء التنبيه
-  Future<void> cancelNotification(int id) async {
-    _dailyTimer?.cancel();
-    await flutterLocalNotificationsPlugin.cancel(id);
-  }
-
-  // تنبيه فوري للاختبار
-  Future<void> showInstantNotification() async {
-    await _showNotification(999, 'تست التنبيه 🔔', 'السيستم شغال!');
+    await flutterLocalNotificationsPlugin.show(
+      999,
+      'Test Notification 🔔',
+      'Notifications are working!',
+      details,
+    );
   }
 }

@@ -22,11 +22,11 @@ class _GeneralPreferencesCardState extends State<GeneralPreferencesCard> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     final enabled = prefs.getBool('notifications_enabled') ?? false;
     final savedHour = prefs.getInt('reminder_hour');
     final savedMinute = prefs.getInt('reminder_minute');
-    
+
     TimeOfDay? savedTime;
     if (savedHour != null && savedMinute != null) {
       savedTime = TimeOfDay(hour: savedHour, minute: savedMinute);
@@ -37,9 +37,9 @@ class _GeneralPreferencesCardState extends State<GeneralPreferencesCard> {
       reminderTime = savedTime;
     });
 
-    // 🔥 إعادة جدولة التنبيه لو كان مفعل (مهم جداً)
+    // إعادة جدولة التنبيه لو كان مفعل
     if (enabled && savedTime != null) {
-      NotificationService().scheduleDailyNotification(
+      await NotificationService().scheduleDailyNotification(
         id: 1,
         title: "Time to Sleep! 🌙",
         body: "It's time to wind down and get some rest.",
@@ -54,7 +54,6 @@ class _GeneralPreferencesCardState extends State<GeneralPreferencesCard> {
 
     if (enable) {
       if (reminderTime == null) {
-        // أول مرة - اختار الوقت
         final time = await showTimePicker(
           context: context,
           initialTime: const TimeOfDay(hour: 22, minute: 0),
@@ -64,11 +63,10 @@ class _GeneralPreferencesCardState extends State<GeneralPreferencesCard> {
         if (time != null) {
           await _saveTimeAndSchedule(time);
         } else {
-          return; // المستخدم ألغى
+          return;
         }
       } else {
-        // فيه وقت محفوظ - شغله
-        NotificationService().scheduleDailyNotification(
+        await NotificationService().scheduleDailyNotification(
           id: 1,
           title: "Time to Sleep! 🌙",
           body: "It's time to wind down and get some rest.",
@@ -76,7 +74,6 @@ class _GeneralPreferencesCardState extends State<GeneralPreferencesCard> {
         );
       }
     } else {
-      // إلغاء التنبيهات
       await NotificationService().cancelNotification(1);
     }
 
@@ -92,14 +89,14 @@ class _GeneralPreferencesCardState extends State<GeneralPreferencesCard> {
     await prefs.setInt('reminder_hour', time.hour);
     await prefs.setInt('reminder_minute', time.minute);
 
-    NotificationService().scheduleDailyNotification(
+    await NotificationService().scheduleDailyNotification(
       id: 1,
       title: "Time to Sleep! 🌙",
       body: "It's time to wind down and get some rest.",
       time: time,
     );
-    
-    debugPrint("🔔 Notification saved and scheduled for ${time.hour}:${time.minute}");
+
+    debugPrint("🔔 Saved and scheduled for ${time.hour}:${time.minute}");
   }
 
   @override
@@ -116,10 +113,9 @@ class _GeneralPreferencesCardState extends State<GeneralPreferencesCard> {
           children: [
             Text(
               "General Preferences",
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 10.h),
 
@@ -140,7 +136,8 @@ class _GeneralPreferencesCardState extends State<GeneralPreferencesCard> {
                 onPressed: () async {
                   final time = await showTimePicker(
                     context: context,
-                    initialTime: reminderTime ?? const TimeOfDay(hour: 22, minute: 0),
+                    initialTime:
+                        reminderTime ?? const TimeOfDay(hour: 22, minute: 0),
                   );
 
                   if (time != null) {
