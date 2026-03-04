@@ -1,9 +1,9 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:slumber/core/firestore_service.dart';
+import 'package:slumber/core/notifications/notification_service.dart';
+import 'package:slumber/core/services/sleep_session_service.dart';
 
 class SleepTrackingView extends StatefulWidget {
   const SleepTrackingView({super.key});
@@ -14,10 +14,18 @@ class SleepTrackingView extends StatefulWidget {
 
 class _SleepTrackingViewState extends State<SleepTrackingView> {
   final _firestoreService = FirestoreService();
+  final _notificationService = NotificationService();
 
-  final Stopwatch _stopwatch = Stopwatch();
-  Timer? _timer;
-  String _elapsedTime = "00:00:00";
+  DateTime? _startTime; // وقت بداية النوم
+  Timer? _timer; // عداد التحديث كل ثانية
+  Duration _elapsed = Duration.zero; // الوقت اللي فات
+  bool _isTracking = false; // هل بنتتبع دلوقتي؟
+
+  @override
+  void initState() {
+    super.initState();
+    _checkActiveSession(); // أول حاجة: نشيك هل فيه جلسة شغالة
+  }
 
   @override
   void dispose() {
@@ -25,41 +33,99 @@ class _SleepTrackingViewState extends State<SleepTrackingView> {
     super.dispose();
   }
 
-  void _start() {
-    _stopwatch.start();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      final d = _stopwatch.elapsed;
+  /// التشييك على جلسة نوم سابقة
+  Future<void> _checkActiveSession() async {
+    final savedStart = await SleepSessionService.getActiveSession();
+
+    if (savedStart != null) {
+      // 🔥 فيه جلسة شغالة! نكمل العداد من وقت البداية الحقيقي
       setState(() {
-        _elapsedTime =
-            "${d.inHours.toString().padLeft(2, '0')}:"
-            "${(d.inMinutes % 60).toString().padLeft(2, '0')}:"
-            "${(d.inSeconds % 60).toString().padLeft(2, '0')}";
+        _startTime = savedStart;
+        _elapsed = DateTime.now().difference(savedStart);
+        _isTracking = true;
       });
-    });
+      _startTimer();
+    }
   }
 
-  Future<void> _stop() async {
+  /// بدء جلسة نوم جديدة
+  Future<void> _startSleep() async {
+    final now = DateTime.now();
+
+    // 1. حفظ وقت البداية
+    await SleepSessionService.startSession();
+
+    // 2. عرض Notification دايمة
+    await _notificationService.showOngoingSleepNotification();
+
+    // 3. تحديث الشاشة
+    setState(() {
+      _startTime = now;
+      _elapsed = Duration.zero;
+      _isTracking = true;
+    });
+
+    // 4. بدء العداد
+    _startTimer();
+  }
+
+  /// إيقاف جلسة النوم وحفظ الركورد
+  Future<void> _stopSleep() async {
     _timer?.cancel();
-    _stopwatch.stop();
 
     final end = DateTime.now();
-    final start = end.subtract(_stopwatch.elapsed);
+    final start = _startTime!;
 
-    // ✅ Save to Firestore
+    // 1. حفظ في Firestore
     await _firestoreService.addSleepRecord(start, end);
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("✅ Sleep session saved!")));
+    // 2. مسح الجلسة المحفوظة
+    await SleepSessionService.endSession();
 
+    // 3. مسح الـ Notification الدايمة
+    await _notificationService.cancelOngoingSleepNotification();
+
+    // 4. رسالة نجاح
     if (mounted) {
+      final duration = end.difference(start);
+      final hours = duration.inHours;
+      final minutes = duration.inMinutes % 60;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("✅ Sleep saved! Duration: ${hours}h ${minutes}m"),
+          backgroundColor: Colors.green,
+        ),
+      );
+
       Navigator.pop(context);
     }
 
+    // 5. Reset
     setState(() {
-      _elapsedTime = "00:00:00";
-      _stopwatch.reset();
+      _startTime = null;
+      _elapsed = Duration.zero;
+      _isTracking = false;
     });
+  }
+
+  /// تشغيل العداد (يتحدث كل ثانية)
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_startTime != null) {
+        setState(() {
+          _elapsed = DateTime.now().difference(_startTime!);
+        });
+      }
+    });
+  }
+
+  /// تنسيق الوقت (HH:MM:SS)
+  String _formatDuration(Duration d) {
+    return "${d.inHours.toString().padLeft(2, '0')}:"
+        "${(d.inMinutes % 60).toString().padLeft(2, '0')}:"
+        "${(d.inSeconds % 60).toString().padLeft(2, '0')}";
   }
 
   @override
@@ -72,31 +138,71 @@ class _SleepTrackingViewState extends State<SleepTrackingView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // أيقونة النوم
+            Icon(
+              _isTracking ? Icons.bedtime : Icons.bedtime_outlined,
+              size: 80.sp,
+              color:
+                  _isTracking
+                      ? colors.primary
+                      : colors.onSurface.withValues(alpha: 0.3),
+            ),
+
+            SizedBox(height: 30.h),
+
+            // حالة التتبع
+            Text(
+              _isTracking ? "Tracking your sleep..." : "Ready to sleep?",
+              style: TextStyle(
+                fontSize: 18.sp,
+                color: colors.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+
+            SizedBox(height: 20.h),
+
+            // العداد
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: Text(
-                _elapsedTime,
-                key: ValueKey(_elapsedTime),
+                _formatDuration(_elapsed),
+                key: ValueKey(_elapsed.inSeconds),
                 style: TextStyle(
-                  fontSize: 50.sp,
+                  fontSize: 55.sp,
                   fontWeight: FontWeight.bold,
                   color: colors.onSurface,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ),
-            SizedBox(height: 40.h),
+
+            SizedBox(height: 15.h),
+
+            // وقت البداية
+            if (_isTracking && _startTime != null)
+              Text(
+                "Started at ${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}",
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: colors.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+
+            SizedBox(height: 50.h),
+
+            // زرار Start / Stop
             ElevatedButton(
-              onPressed: _stopwatch.isRunning ? _stop : _start,
+              onPressed: _isTracking ? _stopSleep : _startSleep,
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    _stopwatch.isRunning ? Colors.redAccent : colors.primary,
+                    _isTracking ? Colors.redAccent : colors.primary,
                 minimumSize: Size(220.w, 60.h),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
               child: Text(
-                _stopwatch.isRunning ? "End Sleep" : "Start Sleep",
+                _isTracking ? "Stop & Save" : "Start Sleep",
                 style: const TextStyle(color: Colors.white, fontSize: 18),
               ),
             ),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:slumber/core/notifications/notification_service.dart';
 import 'package:slumber/core/utils/app_colors.dart';
+import 'package:slumber/core/utils/app_router.dart';
 import 'package:slumber/features/achievements/cubit/achievements_cubit.dart';
 import 'package:slumber/features/achievements/cubit/achievements_state.dart';
 import 'package:slumber/features/achievements/presentation/views/widgets/achievement_unlocked_dialog.dart';
@@ -20,11 +23,32 @@ class _ScreensState extends State<Screens> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = const [
-    DashboardView(), // 🏠
-    InsightsView(), // 📊
-    AchievementsView(), // 🏆
-    ProfileView(), // 👤
+    DashboardView(),
+    InsightsView(),
+    AchievementsView(),
+    ProfileView(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _checkNotificationLaunch();
+  }
+
+  /// 🔥 التشييك: هل اليوزر جاي من الـ Notification؟
+  Future<void> _checkNotificationLaunch() async {
+    if (NotificationFlags.openedFromSleepNotification) {
+      // نرجع الـ Flag لحالته الطبيعية
+      NotificationFlags.openedFromSleepNotification = false;
+
+      // نستنى ثانيتين عشان اليوزر يشوف الـ Home الأول
+      await Future.delayed(const Duration(seconds: 2));
+
+      if (mounted) {
+        context.push(AppRouter.kSleepTrackingView);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

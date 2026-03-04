@@ -55,6 +55,7 @@ class _GeneralPreferencesCardState extends State<GeneralPreferencesCard> {
     if (enable) {
       if (reminderTime == null) {
         final time = await showTimePicker(
+          // ignore: use_build_context_synchronously
           context: context,
           initialTime: const TimeOfDay(hour: 22, minute: 0),
           helpText: "Select Bedtime Reminder",

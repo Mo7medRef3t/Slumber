@@ -7,6 +7,7 @@ import 'package:slumber/core/user/cubit/user_state.dart';
 import 'package:slumber/features/sleep/cubit/sleep_cubit.dart';
 import 'package:slumber/features/sleep/cubit/sleep_state.dart';
 import 'package:slumber/core/utils/app_router.dart';
+import 'widgets/active_session_banner.dart';
 import 'widgets/avg_sleep_card.dart';
 import 'widgets/best_sleep_card.dart';
 import 'widgets/daily_tip_card.dart';
@@ -50,6 +51,7 @@ class DashboardView extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const ActiveSessionBanner(),
 
                       const AvgSleepCard(),
                       SizedBox(height: 10.h),

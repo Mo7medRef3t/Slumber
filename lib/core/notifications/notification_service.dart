@@ -3,6 +3,12 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// 🔥 Flag: هل التطبيق اتفتح من الـ Notification؟
+// static عشان نقدر نوصلها من أي مكان
+class NotificationFlags {
+  static bool openedFromSleepNotification = false;
+}
+
 @pragma('vm:entry-point')
 Future<void> fireNotificationCallback() async {
   final plugin = FlutterLocalNotificationsPlugin();
@@ -40,7 +46,6 @@ Future<void> fireNotificationCallback() async {
     details,
   );
 
-  // إعادة الجدولة لبكرة
   final hour = prefs.getInt('reminder_hour');
   final minute = prefs.getInt('reminder_minute');
 
@@ -63,8 +68,6 @@ Future<void> fireNotificationCallback() async {
       rescheduleOnReboot: true,
       allowWhileIdle: true,
     );
-
-    debugPrint("🔔 Re-scheduled for tomorrow: $nextAlarm");
   }
 }
 
@@ -92,7 +95,27 @@ class NotificationService {
       iOS: iosSettings,
     );
 
-    await flutterLocalNotificationsPlugin.initialize(initSettings);
+    await flutterLocalNotificationsPlugin.initialize(
+      initSettings,
+      // 🔥 لما اليوزر يدوس على أي Notification
+      onDidReceiveNotificationResponse: (NotificationResponse details) {
+        if (details.payload == 'sleep_tracking') {
+          NotificationFlags.openedFromSleepNotification = true;
+        }
+      },
+    );
+
+    // 🔥 التشييك: هل التطبيق اتفتح من Notification؟ (Cold Start)
+    final launchDetails =
+        await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+
+    if (launchDetails?.didNotificationLaunchApp == true) {
+      final payload = launchDetails?.notificationResponse?.payload;
+      if (payload == 'sleep_tracking') {
+        NotificationFlags.openedFromSleepNotification = true;
+        debugPrint("🚀 App launched from sleep tracking notification!");
+      }
+    }
 
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
@@ -105,6 +128,7 @@ class NotificationService {
     debugPrint("✅ NotificationService + AlarmManager initialized");
   }
 
+  // ===== Bedtime Reminder =====
   Future<void> scheduleDailyNotification({
     required int id,
     required String title,
@@ -137,17 +161,46 @@ class NotificationService {
     );
 
     debugPrint("🔔 Alarm scheduled for: $scheduledDate");
-    debugPrint(
-      "🔔 Minutes remaining: ${scheduledDate.difference(now).inMinutes}",
-    );
   }
 
   Future<void> cancelNotification(int id) async {
     await AndroidAlarmManager.cancel(id);
     await flutterLocalNotificationsPlugin.cancel(id);
-    debugPrint("❌ Alarm $id cancelled");
   }
 
+  // ===== Ongoing Sleep Notification =====
+  Future<void> showOngoingSleepNotification() async {
+    const NotificationDetails details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'sleep_tracking_channel',
+        'Sleep Tracking',
+        channelDescription: 'Shows while sleep tracking is active',
+        importance: Importance.low,
+        priority: Priority.low,
+        ongoing: true,
+        autoCancel: false,
+        playSound: false,
+        enableVibration: false,
+        showWhen: false,
+      ),
+      iOS: DarwinNotificationDetails(),
+    );
+
+    // 🔥 الـ payload = 'sleep_tracking' عشان نعرف إن الدوسة من هنا
+    await flutterLocalNotificationsPlugin.show(
+      100,
+      'Sleep Tracking Active 🌙',
+      'Tap to return to Slumber',
+      details,
+      payload: 'sleep_tracking',
+    );
+  }
+
+  Future<void> cancelOngoingSleepNotification() async {
+    await flutterLocalNotificationsPlugin.cancel(100);
+  }
+
+  // ===== Test =====
   Future<void> showInstantNotification() async {
     const NotificationDetails details = NotificationDetails(
       android: AndroidNotificationDetails(
