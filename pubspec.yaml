@@ -45,8 +45,10 @@ dependencies:
   go_router: ^16.0.0
   google_fonts: ^6.3.2
   google_sign_in: ^6.3.0
+  image_picker: ^1.2.1
   intl: ^0.20.2
   package_info_plus: ^9.0.0
+  path_provider: ^2.1.5
   shared_preferences: ^2.5.3
   timezone: ^0.10.1
   url_launcher: ^6.3.2
