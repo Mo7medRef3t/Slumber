@@ -79,46 +79,54 @@ class AchievementsRules {
       progress: progress,
     );
   }
+
   static Achievement _nightOwl(List<SleepRecord> history) {
-  final count =
-      history.where((e) => e.startTime.hour <= 10).length;
+    final count = history.where((e) => e.startTime.hour <= 10).length;
 
-  final progress = (count / 10).clamp(0, 1).toDouble();
+    final progress = (count / 10).clamp(0, 1).toDouble();
 
-  return Achievement(
-    type: AchievementType.nightOwl,
-    title: "Night Owl",
-    description: "Sleep before 10 PM, 10 times",
-    unlocked: count >= 10,
-    progress: progress,
-  );
-}
-
-
-static Achievement _consistentSleeper(List<SleepRecord> history) {
-  if (history.length < 5) {
-    return const Achievement(
-      type: AchievementType.consistency,
-      title: "Consistent Sleeper",
-      description: "Maintain a consistent bedtime for 5 days",
-      unlocked: false,
-      progress: 0,
+    return Achievement(
+      type: AchievementType.nightOwl,
+      title: "Night Owl",
+      description: "Sleep before 10 PM, 10 times",
+      unlocked: count >= 10,
+      progress: progress,
     );
   }
 
-  final recent = history.take(5).toList();
-  final base = recent.first.startTime;
+  static Achievement _consistentSleeper(List<SleepRecord> history) {
+    if (history.length < 5) {
+      return const Achievement(
+        type: AchievementType.consistency,
+        title: "Consistent Sleeper",
+        description: "Maintain a consistent bedtime for 5 days",
+        unlocked: false,
+        progress: 0,
+      );
+    }
 
-  final consistent = recent.every(
-    (e) => (e.startTime.difference(base).inMinutes).abs() <= 30,
-  );
+    final recent = history.take(5).toList();
 
-  return Achievement(
-    type: AchievementType.consistency,
-    title: "Consistent Sleeper",
-    description: "Maintain a consistent bedtime for 5 days",
-    unlocked: consistent,
-    progress: consistent ? 1 : 0.4,
-  );
-}
+    final baseMinutes =
+        recent.first.startTime.hour * 60 + recent.first.startTime.minute;
+
+    final consistent = recent.every((e) {
+      int recordMinutes = e.startTime.hour * 60 + e.startTime.minute;
+
+      int diff = (recordMinutes - baseMinutes).abs();
+      if (diff > 720) {
+        diff = 1440 - diff; 
+      }
+
+      return diff <= 30;
+    });
+
+    return Achievement(
+      type: AchievementType.consistency,
+      title: "Consistent Sleeper",
+      description: "Maintain a consistent bedtime for 5 days",
+      unlocked: consistent,
+      progress: consistent ? 1 : 0.4,
+    );
+  }
 }
