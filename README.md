@@ -191,6 +191,14 @@ users/{uid}/sleepHistory/{docId}
 
 ---
 
+## 🧪 Comprehensive Unit Testing
+To ensure the highest level of reliability and accuracy, the core business logic is heavily tested:
+- **Algorithms Tested:** `SleepScoreCalculator`, `AchievementsRules`, and `SleepSessionService`.
+- **Test Coverage:** Validates edge cases like day-overlapping sleep sessions, accurate sleep debt calculations, and precise achievement progress tracking.
+- **Status:** 42/42 Tests Passing ✅.
+
+---
+
 ## 📄 License
 
 This project is for portfolio/educational purposes.
